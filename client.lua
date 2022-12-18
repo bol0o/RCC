@@ -62,8 +62,9 @@ local function init()
     -- if (not modem.isWireless()) then return ("Modem is not wireless!") end
 
     -- Check for reactor
-    -- if (reactor == nil) then return ("Couldn't find reactor connected to the computer!", 'red') end
-    -- if (not reactor.getConnected()) then return ("Reactor must be fully assembled!", 'red') end
+    reactor = peripheral.find("BigReactors-Reactor")
+    if (reactor == nil) then return ("Couldn't find reactor connected to the computer!", 'red') end
+    if (not reactor.getConnected()) then return ("Reactor must be fully assembled!", 'red') end
 
     -- Check for connected monitor
     monitor = peripheral.find("monitor")
