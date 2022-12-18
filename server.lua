@@ -36,6 +36,49 @@ local function dict_to_arr(t)
     return t_copy
 end
 
+function convert_rf_metrics(rf)
+    if (tonumber(rf) == nil) then
+        return "-", ""
+    end
+
+    local convertedRf
+    local metrics
+
+    rf = tonumber(rf)
+    if(rf > 1000 and rf < 1000000) then
+        convertedRf = string.format("%.2f", rf / 1000)
+        metrics = 'KiRF'
+    elseif(rf > 1000000) then
+        convertedRf = string.format("%.2f", rf / 1000000)
+        metrics = 'MeRf'
+    else
+        convertedRf = string.format("%.2f", rf)
+        metrics = 'RF'
+    end
+
+    return convertedRf, metrics
+end
+
+function convert_B_metrics(milliBuckets)
+    if (tonumber(milliBuckets) == nil) then
+        return "-", ""
+    end
+
+    local convertedBuckets
+    local metrics
+
+    milliBuckets = tonumber(milliBuckets)
+    if(milliBuckets > 1000) then
+        convertedBuckets = string.format("%.2f", milliBuckets / 1000)
+        metrics = 'B'
+    else
+        convertedBuckets = string.format("%.2f", milliBuckets)
+        metrics = 'mB'
+    end
+
+    return convertedBuckets, metrics
+end
+
 local function init()
     ------- Rednet -------
     -- Check if there is a wireless modem
@@ -79,15 +122,19 @@ local function init()
             print("Using terminal mode...")
             monitor = nil
         else
-            print("Using monitor mode...")
-        -- Check if monitor uses color
+            if (not monitor.isColor()) then
+                print("Monitor doesn't support colors")
+                monitor = nil
+            else
+                print("Using monitor mode...")
+            end
         end
     end
 
     return true
 end
 
---- Updates logic ---
+--- UI logic ---
 local selected_index = 1
 local updated_data;
 
@@ -150,8 +197,9 @@ function terminal_update()
     end
     term.setTextColor(colors.white)
 
+    local generated_rfs, metrics = convert_rf_metrics(updated_data['generated_rfs'])
     write("RF generated: ")
-    print("         " .. updated_data['generated_rfs'])
+    print("         " .. generated_rfs .. " " .. metrics)
 
     write("Energy stored (%): ")
     if (updated_data['energy_stored_percentage'] ~= "-") then
@@ -176,14 +224,20 @@ function terminal_update()
     end
     term.setTextColor(colors.white)
 
+    local fuel_consumption, metrics = convert_B_metrics(updated_data['fuel_consumption'])
     write("Fuel consumed: ")
-    print("        " .. updated_data['fuel_consumption'])
+    print("        " .. fuel_consumption .. " " .. metrics)
 
     write("Fuel reactivity (%): ")
-    print("  " .. updated_data['fuel_reactivity_percentage'])
+    if (updated_data['fuel_reactivity_percentage'] ~= "-") then
+        print("  " .. updated_data['fuel_reactivity_percentage'] .. "%")
+    else
+        print("  -")
+    end
 
+    local waste_amount, metrics = convert_B_metrics(updated_data['waste_amount'])
     write("Waste amount: ")
-    print("         " .. updated_data['waste_amount'])
+    print("         " .. updated_data['waste_amount'] .. " " .. metrics)
 
 end
 
@@ -216,6 +270,23 @@ local coords = {
 }
 
 local function monitor_update()
+    term.clear()
+
+    term.setTextColor(colors.blue)
+    term.setCursorPos(15, 6)
+    write("______  _____  _____ ")
+    term.setCursorPos(15, 7)
+    write("| ___ \\/  __ \\/  __ \\")
+    term.setCursorPos(15, 8)
+    write("| |_/ /| /  \\/| /  \\/")
+    term.setCursorPos(15, 9)
+    write("|    / | |    | |    ")
+    term.setCursorPos(15, 10)
+    write("| |\\ \\ | \\__/\\| \\__/\\")
+    term.setCursorPos(15, 11)
+    write("\\_| \\_| \\____/ \\____/")
+    term.setTextColor(colors.white)
+
     width, height = monitor.getSize()
     local surf = surface.create(width, height, colors.black)
 
@@ -232,7 +303,24 @@ local function monitor_update()
     surf:drawPixel(51, 4, colors.white)
     surf:drawPixel(57, 4, colors.white)
 
-    surf:fillRect(49, 14, 11, 4, colors.blue)
+    local eject_text1;
+    local eject_text2;
+    local eject_color;
+    local eject_text1_x;
+    if (updated_data['is_active'] == "-") then
+        eject_text1 = "-"
+        eject_text1_x = 53
+        eject_text2 = ""
+        eject_color = colors.gray
+    else
+        eject_text1 = "Eject"
+        eject_text1_x = 52
+        eject_text2 = "Waste"
+        eject_color = colors.blue
+    end
+    surf:fillRect(49, 14, 11, 4, eject_color)
+    surf:drawString(eject_text1, eject_text1_x, 15, eject_color, colors.white)
+    surf:drawString(eject_text2, 52, 16, eject_color, colors.white)
 
     local state_text;
     local state_color;
@@ -250,9 +338,6 @@ local function monitor_update()
     end
     surf:fillRect(49, 9, 11, 4, state_color)
     surf:drawString(state_text, 53, 10, state_color, colors.white)
-
-    surf:drawString("Eject", 52, 15, colors.blue, colors.white)
-    surf:drawString("Waste", 52, 16, colors.blue, colors.white)
 
     --- Info
     local wss_conn_text;
@@ -273,7 +358,8 @@ local function monitor_update()
     surf:drawString("UUID: " .. updated_data['uuid'], 2, 6, colors.black, colors.white)
 
     surf:drawString("RF generated: ", 2, 7, colors.black, colors.white)
-    surf:drawString(tostring(updated_data['generated_rfs']), 23, 7, colors.black, colors.white)
+    local generated_rfs, metrics = convert_rf_metrics(updated_data['generated_rfs'])
+    surf:drawString(generated_rfs .. " " .. metrics, 23, 7, colors.black, colors.white)
 
     local stored_text;
     local stored_color;
@@ -308,19 +394,33 @@ local function monitor_update()
     surf:drawString(fuel_text, 23, 9, colors.black, fuel_color)
 
     surf:drawString("Fuel consumed: ", 2, 10, colors.black, colors.white)
-    surf:drawString(tostring(updated_data['fuel_consumption']), 23, 10, colors.black, colors.white)
+    local fuel_consumption, metrics = convert_B_metrics(updated_data['fuel_consumption'])
+    surf:drawString(fuel_consumption .. " " .. metrics, 23, 10, colors.black, colors.white)
 
-    surf:drawString("Fuel reactivity (%): ", 2, 11, colors.black, colors.white)
-    surf:drawString(tostring(updated_data['fuel_reactivity_percentage']), 23, 11, colors.black, colors.white)
+    surf:drawString("Fuel reactivity: ", 2, 11, colors.black, colors.white)
+    if (updated_data['fuel_reactivity_percentage'] == "-") then
+        surf:drawString("-", 23, 11, colors.black, colors.white)
+    else
+        surf:drawString(tostring(updated_data['fuel_reactivity_percentage']) .. "%", 23, 11, colors.black, colors.white)
+    end
 
     surf:drawString("Fuel temperature: ", 2, 12, colors.black, colors.white)
-    surf:drawString(tostring(updated_data['fuel_temperature']), 23, 12, colors.black, colors.white)
+    if (updated_data['fuel_temperature'] == "-") then
+        surf:drawString("-", 23, 12, colors.black, colors.white)
+    else
+        surf:drawString(tostring(updated_data['fuel_temperature']) .. "C", 23, 12, colors.black, colors.white)
+    end
 
     surf:drawString("Waste amount: ", 2, 13, colors.black, colors.white)
-    surf:drawString(tostring(updated_data['waste_amount']), 23, 13, colors.black, colors.white)
+    local waste_amount, metrics = convert_B_metrics(updated_data['waste_amount'])
+    surf:drawString(waste_amount .. " " .. metrics, 23, 13, colors.black, colors.white)
 
     surf:drawString("Casing temperature: ", 2, 14, colors.black, colors.white)
-    surf:drawString(tostring(updated_data['casing_temperature']), 23, 14, colors.black, colors.white)
+    if (updated_data['casing_temperature'] == "-") then
+        surf:drawString("-", 23, 14, colors.black, colors.white)
+    else
+        surf:drawString(tostring(updated_data['casing_temperature']) .. " C", 23, 14, colors.black, colors.white)
+    end
 
     surf:drawString("Control rods: ", 2, 15, colors.black, colors.white)
     surf:drawString(tostring(updated_data['control_rods']), 23, 15, colors.black, colors.white)
@@ -390,12 +490,30 @@ local function send_command(command)
     end
 end
 
+local function touch_event(event_name)
+    if (event_name == "previous") then
+        local clients_copy = dict_to_arr(clients)
+        if (#clients_copy > 1) then 
+            previous_client()
+        end
+    elseif (event_name == "next") then
+        local clients_copy = dict_to_arr(clients)
+        if (#clients_copy > 1) then 
+            next_client()
+        end
+    elseif (event_name == "change_state") then
+        send_command("change_state")
+    elseif (event_name == "eject_waste") then
+        send_command("eject_waste")
+    end
+end
+
 function keypress_listen()
     while true do
         local event, key = os.pullEventRaw("key")
 
         local clients_copy = dict_to_arr(clients)
-        if (#clients_copy ~= 0) then 
+        if (#clients_copy > 1) then 
             if (key == keys.a or key == keys.left) then
                 previous_client()
             elseif (key == keys.d or key == keys.right) then
@@ -410,21 +528,13 @@ function touch_listen()
         local _, __, x, y = os.pullEvent("monitor_touch")
         for button, values in pairs(coords) do
             if(x > values['x'] and x <= values['x'] + values['w'] and y > values['y'] and y <= values['y'] + values['h']) then
-                if (button == "previous") then
-                    previous_client()
-                elseif (button == "next") then
-                    next_client()
-                elseif (button == "change_state") then
-                    send_command("change_state")
-                elseif (button == "eject_waste") then
-                    send_command("eject_waste")
-                end
+                touch_event(button)
             end
         end
     end
 end
 
-function listen()
+function event_listen()
     if (monitor ~= nil) then
         touch_listen()
     else
@@ -438,20 +548,19 @@ end
 
 --- Function called when clients object is updated
 local function clients_update()
-    if (ws == false) then return end
-
     local clients_copy = dict_to_arr(clients)
-    ws.send(json.encode{
-        message_type = 'connection update',
-        client_type = 'MC',
-        reactor_ids = clients_copy
-    })
-
     if (#clients_copy == 0) then
         reset_data()
     else
         update()
     end
+
+    if (ws == false) then return end
+    ws.send(json.encode{
+        message_type = 'connection update',
+        client_type = 'MC',
+        reactor_ids = clients_copy
+    })
 end
 
 --- Handles incoming pings from rednet clients
@@ -481,7 +590,6 @@ local function check_rednet_disconnected()
                 ping_times[key] = nil
                 clients[key] = nil
                 clients_update()
-                -- print("Client with id " .. key .. " disconnected")
             end
         end
         os.sleep(check_every)
@@ -553,7 +661,7 @@ local function handle_websocket_message()
 end
 ---------
 
-local function receive_updates()
+local function receive_reactor_updates()
     while true do
         id, msg = rednet.receive(protocol)
 
@@ -573,16 +681,19 @@ local function receive_updates()
     end
 end
 
+term.clear()
+
 i = init()
 if (i ~= true) then
     print(i)
 else
+    os.sleep(3)
     update()
     parallel.waitForAny(handle_rednet_ping,
                         check_rednet_disconnected,
-                        receive_updates,
+                        receive_reactor_updates,
                         websocket_closed,
                         retry_websocket,
                         handle_websocket_message,
-                        listen)
+                        event_listen)
 end

@@ -80,7 +80,7 @@ local function init()
         else
             if (not monitor.isColor()) then
                 print("Monitor doesn't support colors")
-                -- monitor = nil
+                monitor = nil
             end
             print("Using monitor mode...")
         end
@@ -199,7 +199,7 @@ end
 
 ---------
 
---- Updates rendering logic ---
+--- UI logic ---
 local function print_centered(str)
     width, height = term.getSize()
     ix, iy = term.getCursorPos()
@@ -455,10 +455,13 @@ local function receive_commands()
     end
 end
 
+term.clear()
+
 i = init()
 if (i ~= true) then
     print(i)
 else
+    os.sleep(3)
     parallel.waitForAny(rednet_ping, search_for_server, receive_commands, update)
 end
 -- Test if multiple networks work

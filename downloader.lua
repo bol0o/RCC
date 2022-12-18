@@ -137,7 +137,7 @@ local function download_server_files()
     os.sleep(0.4)
 
     update('Downloading server.lua')
-    download_file("https://pastebin.com/raw/aRruuu7Q", 'server')
+    download_file("https://raw.githubusercontent.com/bol0o/RCC/main/server.lua", 'server')
     bar(0.65)
     os.sleep(0.4)
 
@@ -188,7 +188,7 @@ local function download_client_files()
     bar(0.3)
 
     update('Downloading client.lua')
-    download_file("https://pastebin.com/raw/W8zBGqg2", 'client')
+    download_file("https://raw.githubusercontent.com/bol0o/RCC/main/client.lua", 'client')
     os.sleep(0.4)
     bar(0.65)
 
