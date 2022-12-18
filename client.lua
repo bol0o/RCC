@@ -112,32 +112,40 @@ local function init()
 end
 
 --- Reactor data and control ---
-local is_active = true
-local control_rods = 10
-local casing_temperature = 120
-local fuel_temperature = 130
-local fuel = 300
-local max_fuel_amount = 300
-local generated_rfs = 2137
-local fuel_consumption = 0.3
-local energy_stored = 0
-local energy_capacity = 1000000
-local waste_amount = 0
-local fuel_reactivity_percentage = 69
+local is_active;
+local control_rods;
+local casing_temperature;
+local fuel_temperature;
+local fuel;
+local fuel_amount_max;
+local generated_rfs;
+local fuel_consumption;
+local energy_stored;
+local energy_capacity;
+local waste_amount;
+local fuel_reactivity_percentage;
 
-local energy_stored_percentage = 0
-local fuel_percentage = 0
-local rod_insertion = 40
+local energy_stored_percentage;
+local fuel_percentage;
+local rod_insertion;
 
 function update_data()
-    fuel = fuel - fuel_consumption
-    energy_stored = energy_stored + generated_rfs
-    waste_amount = waste_amount + fuel_consumption
+    is_active = reactor.getActive()
+    control_rods = reactor.getNumberOfControlRods()
+    casing_temperature = reactor.getCasingTemperature()
+    fuel_temperature = reactor.getFuelTemperature()
+    fuel = reactor.getFuelAmount()
+    fuel_amount_max = reactor.getFuelAmountMax()
+    generated_rfs = reactor.getEnergyProducedLastTick()
+    fuel_consumption = reactor.getFuelConsumedLastTick()
+    energy_stored = reactor.getEnergyStored()
+    energy_capacity = reactor.getEnergyCapacity()
+    waste_amount = reactor.getWasteAmount()
+    fuel_reactivity_percentage = reactor.getFuelReactivity()
 
     energy_stored_percentage = energy_stored / energy_capacity
-    fuel_percentage = fuel / max_fuel_amount
-
-   -- string.format("%.2f", exact)
+    fuel_percentage = fuel / fuel_amount_max
+    rod_insertion = get_rods_insertion()
 end
 
 function get_rods_insertion()
