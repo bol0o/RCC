@@ -63,8 +63,8 @@ local function init()
 
     -- Check for reactor
     reactor = peripheral.find("BigReactors-Reactor")
-    if (reactor == nil) then return ("Couldn't find reactor connected to the computer!", 'red') end
-    if (not reactor.getConnected()) then return ("Reactor must be fully assembled!", 'red') end
+    if (reactor == nil) then return ("Couldn't find reactor connected to the computer!") end
+    if (not reactor.getConnected()) then return ("Reactor must be fully assembled!") end
 
     -- Check for connected monitor
     monitor = peripheral.find("monitor")
@@ -74,7 +74,7 @@ local function init()
     else
         print("Monitor found")
         x, y = monitor.getSize()
-        if (x ~= 61 or y ~= 19) then
+        if (x ~= 71 or y ~= 19) then
             print("Dimensions don't match")
             print("Using terminal mode...")
             monitor = nil
@@ -280,6 +280,7 @@ function terminal_update()
     print(string.format("        %.2f%%", fuel_percentage * 100))
     term.setTextColor(colors.white)
 
+    -- Round this
     write("Fuel temperature: ")
     print("     " .. fuel_temperature .. " C")
 
@@ -335,9 +336,9 @@ function screen_update()
     monitor_print_centered("\\_| \\_| \\____/ \\____/")
     monitor.setTextColor(colors.white)
 
-    monitor.setCursorPos(1, 8)
+    monitor.setCursorPos(2, 8)
     monitor.write("Current reactor state: ")
-    monitor.setCursorPos(24, 8)
+    monitor.setCursorPos(25, 8)
     if (is_active == true) then
         monitor.setTextColor(colors.green) 
         monitor.write("On")
@@ -347,32 +348,32 @@ function screen_update()
     end
     monitor.setTextColor(colors.white)
 
-    monitor.setCursorPos(1, 10)
+    monitor.setCursorPos(2, 10)
     monitor.write("RF generated: ")
-    monitor.setCursorPos(24, 10)
+    monitor.setCursorPos(25, 10)
     local generated_rfs, metrics = convert_rf_metrics(generated_rfs)
     monitor.write(generated_rfs .. " " .. metrics)
     
-    monitor.setCursorPos(1, 12)
+    monitor.setCursorPos(2, 12)
     monitor.write("Energy stored (%): ")
     if (energy_stored_percentage<= max_energy_stored_percentage / 100) then monitor.setTextColor(colors.green) else monitor.setTextColor(colors.red) end
-    monitor.setCursorPos(24, 12)
+    monitor.setCursorPos(25, 12)
     monitor.write(string.format("%.2f%%", energy_stored_percentage * 100))
     monitor.setTextColor(colors.white)
     
-    monitor.setCursorPos(1, 14)
+    monitor.setCursorPos(2, 14)
     monitor.write("Waste amount: ")
-    monitor.setCursorPos(24, 14)
+    monitor.setCursorPos(25, 14)
     local waste_amount, metrics = convert_B_metrics(waste_amount)
     monitor.write(waste_amount .. " " .. metrics)
 
-    monitor.setCursorPos(1, 16)
+    monitor.setCursorPos(2, 16)
     monitor.write("Fuel consumed: ")
-    monitor.setCursorPos(24, 16)
+    monitor.setCursorPos(25, 16)
     local fuel_consumption, metrics = convert_B_metrics(fuel_consumption)
     monitor.write(fuel_consumption .. " " .. metrics)
 
-    monitor.setCursorPos(35, 8)
+    monitor.setCursorPos(41, 8)
     monitor.write("Fuel left (%): ")
     if (fuel_percentage >= 0.50) then
         monitor.setTextColor(colors.green) 
@@ -381,29 +382,29 @@ function screen_update()
     else
         monitor.setTextColor(colors.red)
     end
-    monitor.setCursorPos(56, 8)
+    monitor.setCursorPos(62, 8)
     monitor.write(string.format("%.2f%%", fuel_percentage * 100))
     monitor.setTextColor(colors.white)
 
-    monitor.setCursorPos(35, 10)
+    monitor.setCursorPos(41, 10)
     monitor.write("Fuel temperature: ")
-    monitor.setCursorPos(56, 10)
+    monitor.setCursorPos(62, 10)
     monitor.write(fuel_temperature .. " C")
 
-    monitor.setCursorPos(35, 12)
+    monitor.setCursorPos(41, 12)
     monitor.write("Fuel reactivity (%): ")
-    monitor.setCursorPos(56, 12)
+    monitor.setCursorPos(62, 12)
     monitor.write(fuel_reactivity_percentage .. "%")
 
-    monitor.setCursorPos(35, 14)
+    monitor.setCursorPos(41, 14)
     monitor.write("rod insertion: ")
-    monitor.setCursorPos(56, 14)
+    monitor.setCursorPos(62, 14)
     monitor.write(rod_insertion)
 
-    monitor.setCursorPos(35, 16)
+    monitor.setCursorPos(41, 16)
     monitor.write("Connected to server: ")
-    monitor.setCursorPos(56, 16)
-    if (server == nil) then 
+    monitor.setCursorPos(62, 16)
+    if (server ~= nil) then 
         monitor.setTextColor(colors.green) 
         monitor.write("Yes")
     else 
@@ -456,10 +457,10 @@ local function receive_commands()
         local json_msg = json.decode(msg)
 
         if (json_msg["command"] == "change_state") then
-            is_active = not is_active
-
+            reactor.setActive(not reactor.getActive())
+            
         elseif (json_msg["command"] == "eject_waste") then
-            print("Eject waste")
+            reactor.doEjectWaste()
         end
     end
 end

@@ -85,7 +85,7 @@ local function init()
     modem = peripheral.find("modem")
     if (modem == nil) then return ("Modem not found!") end
     colored_print("Modem found", 'blue')
-    -- if (not modem.isWireless()) then return ("Modem is not wireless!") end
+    if (not modem.isWireless()) then return ("Modem is not wireless!") end
 
     -- Open the modem
     peripheral.find("modem", rednet.open)
@@ -117,7 +117,7 @@ local function init()
     else
         print("Monitor found")
         x, y = monitor.getSize()
-        if (x ~= 61 or y ~= 19) then
+        if (x ~= 71 or y ~= 19) then
             print("Dimensions don't match")
             print("Using terminal mode...")
             monitor = nil
@@ -244,25 +244,25 @@ end
 --- Monitor
 local coords = {
     previous = {
-        x = 50,
+        x = 60,
         y = 2,
         w = 3,
         h = 5
     },
     next = {
-        x = 56,
+        x = 66,
         y = 2,
         w = 3,
         h = 5
     },
     change_state = {
-        x = 49,
+        x = 59,
         y = 9,
         w = 11,
         h = 4
     },
     eject_waste = {
-        x = 49,
+        x = 59,
         y = 14,
         w = 11,
         h = 4
@@ -292,16 +292,16 @@ local function monitor_update()
 
     --- Outline
     surf:drawRect(0, 0, width, height, colors.white)
-    surf:drawRect(1, 4, 48, 1, colors.white)
-    surf:drawRect(48, 1, 1, 17, colors.white)
-    surf:drawRect(48, 8, 12, 1, colors.white)
-    surf:drawRect(48, 13, 12, 1, colors.white)
+    surf:drawRect(1, 4, 58, 1, colors.white)
+    surf:drawRect(58, 1, 1, 17, colors.white)
+    surf:drawRect(58, 8, 12, 1, colors.white)
+    surf:drawRect(58, 13, 12, 1, colors.white)
 
     --- Controls
-    surf:drawTriangle(52, 2, 52, 6, 50, 4, colors.white)
-    surf:drawTriangle(56, 2, 56, 6, 58, 4, colors.white)
-    surf:drawPixel(51, 4, colors.white)
-    surf:drawPixel(57, 4, colors.white)
+    surf:drawTriangle(62, 2, 62, 6, 60, 4, colors.white)
+    surf:drawTriangle(66, 2, 66, 6, 68, 4, colors.white)
+    surf:drawPixel(61, 4, colors.white)
+    surf:drawPixel(67, 4, colors.white)
 
     local eject_text1;
     local eject_text2;
@@ -309,18 +309,18 @@ local function monitor_update()
     local eject_text1_x;
     if (updated_data['is_active'] == "-") then
         eject_text1 = "-"
-        eject_text1_x = 53
+        eject_text1_x = 63
         eject_text2 = ""
         eject_color = colors.gray
     else
         eject_text1 = "Eject"
-        eject_text1_x = 52
+        eject_text1_x = 62
         eject_text2 = "Waste"
         eject_color = colors.blue
     end
-    surf:fillRect(49, 14, 11, 4, eject_color)
+    surf:fillRect(59, 14, 11, 4, eject_color)
     surf:drawString(eject_text1, eject_text1_x, 15, eject_color, colors.white)
-    surf:drawString(eject_text2, 52, 16, eject_color, colors.white)
+    surf:drawString(eject_text2, 62, 16, eject_color, colors.white)
 
     local state_text;
     local state_color;
@@ -336,8 +336,8 @@ local function monitor_update()
             state_color = colors.red
         end
     end
-    surf:fillRect(49, 9, 11, 4, state_color)
-    surf:drawString(state_text, 53, 10, state_color, colors.white)
+    surf:fillRect(59, 9, 11, 4, state_color)
+    surf:drawString(state_text, 63, 10, state_color, colors.white)
 
     --- Info
     local wss_conn_text;
@@ -353,7 +353,7 @@ local function monitor_update()
     surf:drawString(wss_conn_text, 20, 2, colors.black, wss_conn_color)
 
     local clients_copy = dict_to_arr(clients)
-    surf:drawString(string.format("%s / %s", selected_index, #clients_copy), 39, 2, colors.black, colors.white)
+    surf:drawString(string.format("%s / %s", selected_index, #clients_copy), 49, 2, colors.black, colors.white)
 
     surf:drawString("UUID: " .. updated_data['uuid'], 2, 6, colors.black, colors.white)
 
@@ -408,7 +408,7 @@ local function monitor_update()
     if (updated_data['fuel_temperature'] == "-") then
         surf:drawString("-", 23, 12, colors.black, colors.white)
     else
-        surf:drawString(tostring(updated_data['fuel_temperature']) .. "C", 23, 12, colors.black, colors.white)
+        surf:drawString(string.format("%.1f% C", updated_data['fuel_temperature'])), 23, 12, colors.black, colors.white)
     end
 
     surf:drawString("Waste amount: ", 2, 13, colors.black, colors.white)
@@ -419,7 +419,7 @@ local function monitor_update()
     if (updated_data['casing_temperature'] == "-") then
         surf:drawString("-", 23, 14, colors.black, colors.white)
     else
-        surf:drawString(tostring(updated_data['casing_temperature']) .. " C", 23, 14, colors.black, colors.white)
+        surf:drawString(string.format("%.1f% C", updated_data['casing_temperature'])), 23, 14, colors.black, colors.white)
     end
 
     surf:drawString("Control rods: ", 2, 15, colors.black, colors.white)
